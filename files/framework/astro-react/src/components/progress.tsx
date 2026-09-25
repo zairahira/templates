@@ -6,6 +6,7 @@ import {
   getCompletedLessons,
   importProgress,
   resetProgress,
+  resetSectionProgress,
 } from '../lib/curriculum-progress';
 
 import '../styles/pages.css';
@@ -22,6 +23,7 @@ type SectionStat = {
   completed: number;
   total: number;
   href: string;
+  slugs: string[];
 };
 
 type ProgressProps = {
@@ -53,9 +55,16 @@ export function Progress({ lessons }: ProgressProps) {
       if (index === undefined) {
         index = stats.length;
         indexBySection.set(lesson.section, index);
-        stats.push({ title: lesson.section, completed: 0, total: 0, href: lesson.href });
+        stats.push({
+          title: lesson.section,
+          completed: 0,
+          total: 0,
+          href: lesson.href,
+          slugs: [],
+        });
       }
 
+      stats[index].slugs.push(lesson.slug);
       stats[index].total += 1;
       if (completedSet.has(lesson.slug)) {
         stats[index].completed += 1;
@@ -100,6 +109,19 @@ export function Progress({ lessons }: ProgressProps) {
     resetProgress();
     setCompletedSlugs([]);
     setFeedback('Progress reset.');
+  }
+
+  function handleSectionReset(section: SectionStat) {
+    const confirmed = window.confirm(
+      `Reset progress for "${section.title}"? This clears completed lessons in this section only and cannot be undone.`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setCompletedSlugs(resetSectionProgress(section.slugs));
+    setFeedback(`Progress reset for ${section.title}.`);
   }
 
   async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
@@ -152,8 +174,21 @@ export function Progress({ lessons }: ProgressProps) {
                 section.total > 0 ? Math.round((section.completed / section.total) * 100) : 0;
               return (
                 <li key={section.title} className="progress-section-row">
-                  <a href={section.href}>{section.title}</a>
-                  <AnimatedCount n={sectionPercent}>%</AnimatedCount>
+                  <div className="progress-section-summary">
+                    <a href={section.href}>{section.title}</a>
+                    <AnimatedCount n={sectionPercent}>%</AnimatedCount>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="progress-section-reset"
+                    aria-label={`Reset ${section.title} progress`}
+                    title={`Reset ${section.title} progress`}
+                    onClick={() => handleSectionReset(section)}
+                    disabled={section.completed === 0}
+                  >
+                    <span aria-hidden="true">↻</span>
+                  </button>
                 </li>
               );
             })}

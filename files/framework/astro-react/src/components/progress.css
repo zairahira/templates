@@ -55,10 +55,47 @@
 
 .progress-section-row {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
+  align-items: center;
   gap: var(--space-sm);
   padding: var(--space-xs) 0;
   border-bottom: 1px solid var(--quaternary-background);
+}
+
+.progress-section-summary {
+  display: flex;
+  flex: 1 1 16rem;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.progress-section-reset {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 1px solid var(--primary-color-translucent);
+  border-radius: 50%;
+  background: none;
+  color: var(--primary-color);
+  font: inherit;
+  font-size: var(--text-size-sm);
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.progress-section-reset:hover:not(:disabled) {
+  background: var(--secondary-background);
+}
+
+.progress-section-reset:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .progress-complete-message {

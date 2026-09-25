@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import userEvent from '@testing-library/user-event';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Progress } from './progress.js';
 
 const lessons = [
@@ -7,8 +8,15 @@ const lessons = [
   { slug: 'next-lesson', href: '/learn/next-lesson', section: 'Section one' },
 ];
 
+const multiSectionLessons = [
+  { slug: 'section-one-a', href: '/learn/section-one-a', section: 'Section one' },
+  { slug: 'section-one-b', href: '/learn/section-one-b', section: 'Section one' },
+  { slug: 'section-two-a', href: '/learn/section-two-a', section: 'Section two' },
+];
+
 describe(Progress, () => {
   beforeEach(() => {
+    vi.restoreAllMocks();
     localStorage.setItem('progress', JSON.stringify(['completed-lesson']));
   });
 
@@ -47,5 +55,33 @@ describe(Progress, () => {
     const sectionLink = screen.getByRole('link', { name: 'Section one' });
 
     expect(sectionLink.getAttribute('href')).toBe('/learn/next-lesson');
+  });
+
+  it('resets only the selected section progress', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    localStorage.setItem('progress', JSON.stringify(['section-one-a', 'section-two-a']));
+
+    render(<Progress lessons={multiSectionLessons} />);
+
+    await user.click(screen.getByRole('button', { name: 'Reset Section one progress' }));
+
+    expect(JSON.parse(localStorage.getItem('progress')!)).toEqual(['section-two-a']);
+    expect(screen.getByText('Progress reset for Section one.')).toBeInTheDocument();
+  });
+
+  it('does not reset section progress when the confirmation is canceled', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(window, 'confirm').mockReturnValue(false);
+    localStorage.setItem('progress', JSON.stringify(['section-one-a', 'section-two-a']));
+
+    render(<Progress lessons={multiSectionLessons} />);
+
+    await user.click(screen.getByRole('button', { name: 'Reset Section one progress' }));
+
+    expect(JSON.parse(localStorage.getItem('progress')!)).toEqual([
+      'section-one-a',
+      'section-two-a',
+    ]);
   });
 });

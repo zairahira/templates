@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { markLessonComplete } from "./curriculum-progress";
+import { markLessonComplete, resetSectionProgress } from "./curriculum-progress";
 
 describe("markLessonComplete", () => {
   beforeEach(() => {
@@ -47,5 +47,41 @@ describe("markLessonComplete", () => {
 
     const stored = JSON.parse(localStorage.getItem("progress")!);
     expect(stored).toEqual(["lesson-1"]);
+  });
+});
+
+describe("resetSectionProgress", () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it("removes completed lessons from the selected section only", () => {
+    localStorage.setItem(
+      "progress",
+      JSON.stringify(["section-one-a", "section-two-a", "section-one-b"]),
+    );
+
+    const updated = resetSectionProgress(["section-one-a", "section-one-b"]);
+
+    expect(updated).toEqual(["section-two-a"]);
+    expect(JSON.parse(localStorage.getItem("progress")!)).toEqual(["section-two-a"]);
+  });
+
+  it("keeps existing progress when the section has no completed lessons", () => {
+    localStorage.setItem("progress", JSON.stringify(["section-two-a"]));
+
+    const updated = resetSectionProgress(["section-one-a", "section-one-b"]);
+
+    expect(updated).toEqual(["section-two-a"]);
+    expect(JSON.parse(localStorage.getItem("progress")!)).toEqual(["section-two-a"]);
+  });
+
+  it("handles corrupted stored progress", () => {
+    localStorage.setItem("progress", "not-json]");
+
+    const updated = resetSectionProgress(["section-one-a"]);
+
+    expect(updated).toEqual([]);
+    expect(JSON.parse(localStorage.getItem("progress")!)).toEqual([]);
   });
 });

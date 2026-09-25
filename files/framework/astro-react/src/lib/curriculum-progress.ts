@@ -36,6 +36,15 @@ export function resetProgress(): void {
   writeCompletedLessons([]);
 }
 
+export function resetSectionProgress(sectionSlugs: string[]) {
+  const sectionSlugSet = new Set(sectionSlugs);
+  const updated = readCompletedLessons().filter((slug) => !sectionSlugSet.has(slug));
+
+  writeCompletedLessons(updated);
+
+  return updated;
+}
+
 export function exportProgress(): string {
   return JSON.stringify(readCompletedLessons(), null, 2);
 }
